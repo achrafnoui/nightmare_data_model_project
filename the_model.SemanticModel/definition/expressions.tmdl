@@ -1,0 +1,285 @@
+expression CUST_MASTER =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "CUST_MASTER", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"CustomerID", Int64.Type}, {"CustomerName", type text}, {"Segment", type text}, {"AddressID", Int64.Type}, {"AccountManager", type text}, {"PaymentTerms", type text}, {"hash_key", type text}, {"source_id", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 8a039a77-8256-47e0-988c-35eabb8faa77
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression customer_contacts =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "customer_contacts", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"CustomerID", Int64.Type}, {"ContactName", type text}, {"Email", type text}, {"IsPrimary", type logical}}),
+		  #"Filtered rows" = Table.SelectRows(#"Changed column type", each ([IsPrimary] = true))
+		in
+		  #"Filtered rows"
+	lineageTag: b203a0c6-0671-4a10-9771-04d814509ab5
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression user_details =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "user_details", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"UserID", Int64.Type}, {"CreditLimit", Int64.Type}, {"Phone", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: bd49cb6b-d6c5-4952-a467-53442f59aab0
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression Address =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "Address", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"AddressID", Int64.Type}, {"Street", type text}, {"CityName", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 9fb1c273-5fb4-4f28-a4c0-7a336dc0b4af
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression cities =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "cities", Kind = "Sheet"]}[Data],
+		  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Column1", type text}, {"Column2", type text}}),
+		  #"Promoted headers" = Table.PromoteHeaders(#"Changed column type", [PromoteAllScalars = true])
+		in
+		  #"Promoted headers"
+	lineageTag: a5c02af4-5472-4261-a423-0865068825e4
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression products =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "products", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"ProductCode", type text}, {"ProductName", type text}, {"Brand", type text}, {"SubcategoryName", type text}, {"UnitPrice", type number}, {"PrimarySupplier", type text}, {"ProductDescription", type text}, {"hash_key", type text}, {"source_id", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: bd0f542d-e9f8-4a86-98e2-77299b1aad7b
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Exception
+
+expression subcategories =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "subcategories", Kind = "Sheet"]}[Data],
+		  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Column1", type text}}),
+		  #"Promoted headers" = Table.PromoteHeaders(#"Changed column type", [PromoteAllScalars = true]),
+		  #"Split column by delimiter" = Table.SplitColumn(#"Promoted headers", "CategorySubcategory", Splitter.SplitTextByDelimiter("|"), {"CategorySubcategory.1", "CategorySubcategory.2"}),
+		  #"Trimmed text" = Table.TransformColumns(#"Split column by delimiter", {{"CategorySubcategory.2", each Text.Trim(_), type nullable text}}),
+		  #"Trimmed text 1" = Table.TransformColumns(#"Trimmed text", {{"CategorySubcategory.1", each Text.Trim(_), type nullable text}}),
+		  #"Renamed columns" = Table.RenameColumns(#"Trimmed text 1", {{"CategorySubcategory.1", "category"}, {"CategorySubcategory.2", "subcategory"}}),
+		  #"Capitalized each word" = Table.TransformColumns(#"Renamed columns", {{"subcategory", each Text.Proper(_), type nullable text}, {"category", each Text.Proper(_), type nullable text}})
+		in
+		  #"Capitalized each word"
+	lineageTag: 1eaf15d9-0a6d-4728-aea3-d31fc58fc3a8
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Exception
+
+expression ORDERS_2025 =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "ORDERS_2025", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"OrderID", type text}, {"LegacyRef", type text}, {"CustomerName", type text}, {"CustomerCity", type text}, {"RegionName", type text}, {"ShipToCity", type text}, {"BillToCity", type text}, {"OrderDate", type datetime}, {"OrderChannel", Int64.Type}, {"Status", type text}, {"Priority", type text}, {"OrderTotal", type number}, {"OrderNotes", type text}, {"SourceFile", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 5950df3d-8abb-434b-abab-50b5e0f746aa
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression ORDERS_2026 =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "ORDERS_2026", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"OrderID", type text}, {"CustomerName", type text}, {"CustomerCity", type text}, {"RegionName", type text}, {"ShipToCity", type text}, {"BillToCity", type text}, {"OrderDate", type datetime}, {"OrderChannel", Int64.Type}, {"Status", type text}, {"Priority", type text}, {"OrderTotal", type number}, {"OrderNotes", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 143ef0d1-8167-4c04-a607-d63ba72ef664
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression orders_merged =
+		let
+		  Source = Table.Combine({ORDERS_2025, ORDERS_2026}),
+		  #"Removed columns" = Table.RemoveColumns(Source, {"LegacyRef", "OrderNotes", "GiftMessage", "SourceFile"})
+		in
+		  #"Removed columns"
+	lineageTag: 5b80dcdf-d218-45b7-8ef1-30c6824a3a92
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression channels =
+		let
+		  Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WMjRQ0lHyz8vJzEtVCC7JL0pVitWJVjICiQalliRm5igEJBaV5KUWgcWNQeLhGfk5qcWJORClJiAht8zUnBSFYLBYLAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [channel_code = _t, channel_name = _t]),
+		  #"Changed column type" = Table.TransformColumnTypes(Source, {{"channel_code", Int64.Type}, {"channel_name", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 59762d3d-399c-4182-86c4-7e932ca75003
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression order_line_items =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "order_line_items", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"LineID", type text}, {"OrderID", type text}, {"ProductName", type text}, {"Quantity", Int64.Type}, {"UnitPrice", type number}, {"UnitCost", type number}, {"DiscountPct", type number}, {"LineTotal", type number}})
+		in
+		  #"Changed column type"
+	lineageTag: 65e390cc-b122-480b-9e40-7db4d3b1b8d3
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression inventory =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "inventory", Kind = "Sheet"]}[Data],
+		  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Column1", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: 7099c2ee-9438-4468-ade4-8020f29f5746
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression exchange_rates =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "exchange_rates", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"Currency", type text}, {"Rate", type number}, {"Date", type date}})
+		in
+		  #"Changed column type"
+	lineageTag: ba6fb5cc-4ef6-432c-9825-fceae4aeb606
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression CAMPAIGN_LOG =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "CAMPAIGN_LOG", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"CampaignName", type text}, {"Channel", type text}, {"StartDate", type date}, {"EndDate", type date}, {"Budget", Int64.Type}, {"Date", type date}, {"Impressions", Int64.Type}, {"Clicks", Int64.Type}, {"Spend", type number}})
+		in
+		  #"Changed column type"
+	lineageTag: 40783993-610f-421a-a3cf-1ed72fdc4108
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression campaign_skus =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "campaign_skus", Kind = "Sheet"]}[Data],
+		  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Column1", type text}, {"Column2", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: eaddb1ea-8f71-407c-81f9-1a985e7a95bc
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression INVOICES =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "INVOICES", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"InvoiceID", type text}, {"OrderID", type text}, {"CustomerName", type text}, {"InvoiceDate", type date}, {"Amount", type number}})
+		in
+		  #"Changed column type"
+	lineageTag: 3ebb24a5-0499-4783-b821-fd0cc9aba24d
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression shipments =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "shipments", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"ShipmentID", type text}, {"OrderID", type text}, {"ShipMode", type text}, {"ShipDate", type date}, {"DeliveryDate", type date}})
+		in
+		  #"Changed column type"
+	lineageTag: f5c50fdd-48f0-4a95-9be6-6ccdf7af2525
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression payments =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "payments", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"PaymentID", type text}, {"InvoiceID", type text}, {"CustomerName", type text}, {"PayDate", type date}, {"Amount", type number}})
+		in
+		  #"Changed column type"
+	lineageTag: a46e19c5-9511-4273-a588-d3dc58f7fcf2
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression invoice_lines =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "invoice_lines", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"InvoiceLineID", type text}, {"InvoiceID", type text}, {"ProductName", type text}, {"Amount", type number}})
+		in
+		  #"Changed column type"
+	lineageTag: bd77299d-a458-4582-b845-bac5231240e6
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression sales_targets =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "sales_targets", Kind = "Sheet"]}[Data],
+		  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+		  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"Period", type date}, {"TargetRevenue", Int64.Type}})
+		in
+		  #"Changed column type"
+	lineageTag: 03382f2b-7013-40db-9175-23bac61dd095
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+
+expression regions =
+		let
+		  Source = Excel.Workbook(File.Contents("C:\Users\Administrator\Desktop\nightmare_data_model_project\dataset.xlsx"), null, true),
+		  #"Navigation 1" = Source{[Item = "regions", Kind = "Sheet"]}[Data],
+		  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Column1", type text}})
+		in
+		  #"Changed column type"
+	lineageTag: de72c490-e2b9-43c7-84d7-d18100e469c0
+	queryGroup: 00_Graveyard
+
+	annotation PBI_ResultType = Table
+

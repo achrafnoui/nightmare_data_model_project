@@ -1,0 +1,40 @@
+table fact_promotion_coverage
+	lineageTag: 48639016-80eb-488f-8a6f-5f25ee6379ea
+
+	column campain_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c1a2b72-00b9-480b-9c1b-3abfa5d25cf7
+		summarizeBy: none
+		sourceColumn: campain_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_key
+		dataType: int64
+		formatString: 0
+		lineageTag: f1c81e68-af00-4851-b767-8e1f20b198c0
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_promotion_coverage = m
+		mode: import
+		queryGroup: 03_Facts
+		source =
+				let
+				  Source = campaign_skus,
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Split column by delimiter" = Table.ExpandListColumn(Table.TransformColumns(#"Promoted headers", {{"PromotedSKUs", Splitter.SplitTextByDelimiter(","), let itemType = (type nullable text) meta [Serialized.Text = true] in type {itemType}}}), "PromotedSKUs"),
+				  #"Trimmed text" = Table.TransformColumns(#"Split column by delimiter", {{"PromotedSKUs", each Text.Trim(_), type nullable text}}),
+				  #"Merged queries" = Table.NestedJoin(#"Trimmed text", {"CampaignName"}, dim_campaign, {"campaign_name"}, "dim_campaign", JoinKind.LeftOuter),
+				  #"Expanded dim_campaign" = Table.ExpandTableColumn(#"Merged queries", "dim_campaign", {"campain_key"}, {"campain_key"}),
+				  #"Merged queries 1" = Table.NestedJoin(#"Expanded dim_campaign", {"PromotedSKUs"}, dim_product, {"product_code"}, "dim_product", JoinKind.LeftOuter),
+				  #"Expanded dim_product" = Table.ExpandTableColumn(#"Merged queries 1", "dim_product", {"product_key"}, {"product_key"}),
+				  #"Removed columns" = Table.RemoveColumns(#"Expanded dim_product", {"PromotedSKUs", "CampaignName"})
+				in
+				  #"Removed columns"
+
+	annotation PBI_ResultType = Table
+

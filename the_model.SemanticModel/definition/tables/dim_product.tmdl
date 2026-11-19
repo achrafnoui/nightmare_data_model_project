@@ -1,0 +1,89 @@
+table dim_product
+	lineageTag: 71fdad19-8a73-4fca-86ed-ebfd48802c70
+
+	column product_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 91ffe6e6-b3a7-49bd-b84d-6f132400a998
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = User
+
+	column product_code
+		dataType: string
+		lineageTag: bdab1540-9243-45f6-9fee-a0c8b3463cf3
+		summarizeBy: none
+		sourceColumn: product_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: 7993e547-c791-49a0-b4af-0ec49b498f23
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column brand
+		dataType: string
+		lineageTag: 9658e94c-bc3b-42c7-9817-559e71af096b
+		summarizeBy: none
+		sourceColumn: brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column subcategory
+		dataType: string
+		lineageTag: 6c01edf3-4758-4e43-b01a-9ae6a390fea1
+		summarizeBy: none
+		sourceColumn: subcategory
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: 5a52572c-f3d1-4a24-a7b9-082fd8db97db
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column price
+		dataType: double
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 2828a7fa-2e01-49ea-9c19-7985faf68aff
+		summarizeBy: sum
+		sourceColumn: price
+
+		annotation SummarizationSetBy = Automatic
+
+	column supplier
+		dataType: string
+		lineageTag: cdfe0ca7-5b4c-478f-aa6c-4844f739aafe
+		summarizeBy: none
+		sourceColumn: supplier
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product = m
+		mode: import
+		queryGroup: 02_Dimensions
+		source =
+				let
+				  Source = products,
+				  #"Filtered rows" = Table.SelectRows(Source, each ([ProductCode] <> "ELE-901" and [ProductCode] <> "HOM-902" and [ProductCode] <> "ZZZ-000")),
+				  #"Merged queries" = Table.NestedJoin(#"Filtered rows", {"SubcategoryName"}, subcategories, {"subcategory"}, "subcategories", JoinKind.LeftOuter),
+				  #"Expanded subcategories" = Table.ExpandTableColumn(#"Merged queries", "subcategories", {"category"}, {"subcategories.category"}),
+				  #"Reordered columns" = Table.ReorderColumns(#"Expanded subcategories", {"ProductCode", "ProductName", "Brand", "SubcategoryName", "subcategories.category", "UnitPrice", "PrimarySupplier", "ProductDescription", "hash_key", "source_id"}),
+				  #"Removed columns" = Table.RemoveColumns(#"Reordered columns", {"source_id", "hash_key", "ProductDescription"}),
+				  #"Added index" = Table.AddIndexColumn(#"Removed columns", "Index", 1, 1, Int64.Type),
+				  #"Renamed columns" = Table.RenameColumns(#"Added index", {{"Index", "product_key"}}),
+				  #"Reordered columns 1" = Table.ReorderColumns(#"Renamed columns", {"product_key", "ProductCode", "ProductName", "Brand", "SubcategoryName", "subcategories.category", "UnitPrice", "PrimarySupplier"}),
+				  #"Renamed columns 1" = Table.RenameColumns(#"Reordered columns 1", {{"ProductCode", "product_code"}, {"ProductName", "product_name"}, {"Brand", "brand"}, {"SubcategoryName", "subcategory"}, {"subcategories.category", "category"}, {"UnitPrice", "price"}, {"PrimarySupplier", "supplier"}})
+				in
+				  #"Renamed columns 1"
+
+	annotation PBI_ResultType = Table
+

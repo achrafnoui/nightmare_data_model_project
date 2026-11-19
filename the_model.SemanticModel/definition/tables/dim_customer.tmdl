@@ -1,0 +1,123 @@
+table dim_customer
+	lineageTag: edc53956-a6c7-4964-b198-84413557355b
+
+	column customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 6007be66-b520-4c88-81e8-2f93f0bfc05c
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = User
+
+	column customer_name
+		dataType: string
+		lineageTag: fdd54868-fd29-4215-bed1-e039570001c6
+		summarizeBy: none
+		sourceColumn: customer_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column segment
+		dataType: string
+		lineageTag: 172c5c6a-57c1-4b1e-948f-7f1b07d5914e
+		summarizeBy: none
+		sourceColumn: segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column account_manager
+		dataType: string
+		lineageTag: 8d16bdf2-79a2-4563-98dd-06969d76aaf7
+		summarizeBy: none
+		sourceColumn: account_manager
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_terms
+		dataType: string
+		lineageTag: f80fb3e0-dfd4-4148-b49b-ac19e1cddcca
+		summarizeBy: none
+		sourceColumn: payment_terms
+
+		annotation SummarizationSetBy = Automatic
+
+	column contact_name
+		dataType: string
+		lineageTag: 20ee97b5-4171-419e-a0e6-a13a185e276f
+		summarizeBy: none
+		sourceColumn: contact_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column contact_email
+		dataType: string
+		lineageTag: 70b171bd-a1c4-41e2-8440-b51198368285
+		summarizeBy: none
+		sourceColumn: contact_email
+
+		annotation SummarizationSetBy = Automatic
+
+	column credit_limit
+		dataType: int64
+		formatString: 0
+		lineageTag: 547539b3-d711-4152-a812-29394ec1a320
+		summarizeBy: sum
+		sourceColumn: credit_limit
+
+		annotation SummarizationSetBy = Automatic
+
+	column phone
+		dataType: string
+		lineageTag: bef08bf7-ff57-4f8e-ae44-20e0a036ca8d
+		summarizeBy: none
+		sourceColumn: phone
+
+		annotation SummarizationSetBy = Automatic
+
+	column street
+		dataType: string
+		lineageTag: 0764bc77-e427-4254-9860-fd877336df7b
+		summarizeBy: none
+		sourceColumn: street
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		lineageTag: 18c7baca-fa11-4067-affd-585a976ec88f
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: a28e1396-29f6-41a9-a950-1897b66199eb
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_customer = m
+		mode: import
+		queryGroup: 02_Dimensions
+		source =
+				let
+				  Source = CUST_MASTER,
+				  #"Filtered rows" = Table.SelectRows(Source, each ([CustomerID] <> 9999)),
+				  #"Merged queries" = Table.NestedJoin(#"Filtered rows", {"CustomerID"}, customer_contacts, {"CustomerID"}, "customer_contacts", JoinKind.LeftOuter),
+				  #"Expanded customer_contacts" = Table.ExpandTableColumn(#"Merged queries", "customer_contacts", {"ContactName", "Email", "IsPrimary"}, {"customer_contacts.ContactName", "customer_contacts.Email", "customer_contacts.IsPrimary"}),
+				  #"Merged queries 1" = Table.NestedJoin(#"Expanded customer_contacts", {"CustomerID"}, user_details, {"UserID"}, "user_details", JoinKind.LeftOuter),
+				  #"Expanded user_details" = Table.ExpandTableColumn(#"Merged queries 1", "user_details", {"CreditLimit", "Phone"}, {"user_details.CreditLimit", "user_details.Phone"}),
+				  #"Merged queries 2" = Table.NestedJoin(#"Expanded user_details", {"AddressID"}, Address, {"AddressID"}, "Address", JoinKind.LeftOuter),
+				  #"Expanded Address" = Table.ExpandTableColumn(#"Merged queries 2", "Address", {"Street", "CityName"}, {"Address.Street", "Address.CityName"}),
+				  #"Merged queries 3" = Table.NestedJoin(#"Expanded Address", {"Address.CityName"}, cities, {"CityName"}, "cities", JoinKind.LeftOuter),
+				  #"Expanded cities" = Table.ExpandTableColumn(#"Merged queries 3", "cities", {"RegionName"}, {"cities.RegionName"}),
+				  #"Removed columns" = Table.RemoveColumns(#"Expanded cities", {"AddressID", "hash_key", "source_id", "customer_contacts.IsPrimary"}),
+				  #"Renamed columns" = Table.RenameColumns(#"Removed columns", {{"CustomerID", "customer_id"}, {"CustomerName", "customer_name"}, {"Address.Street", "street"}, {"Address.CityName", "city"}, {"cities.RegionName", "region"}, {"user_details.Phone", "phone"}, {"user_details.CreditLimit", "credit_limit"}, {"customer_contacts.Email", "contact_email"}, {"customer_contacts.ContactName", "contact_name"}, {"PaymentTerms", "payment_terms"}, {"AccountManager", "account_manager"}, {"Segment", "segment"}})
+				in
+				  #"Renamed columns"
+
+	annotation PBI_ResultType = Table
+

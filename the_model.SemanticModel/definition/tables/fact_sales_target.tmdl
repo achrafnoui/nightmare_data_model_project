@@ -1,0 +1,40 @@
+table fact_sales_target
+	lineageTag: 2133f723-f808-4304-94b5-1378e78bee33
+
+	column date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 7d360e78-f447-434b-bedf-c078cf028a29
+		summarizeBy: none
+		sourceColumn: date
+
+		variation Variation
+			isDefault
+			relationship: 283a5c56-7b0c-4a3e-bbbe-f5e6b21797eb
+			defaultHierarchy: LocalDateTable_483864f9-77c8-4967-999b-457f08393daf.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column target_revenue
+		dataType: int64
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 9cf1a87d-caa9-4272-82f2-f59013f5c087
+		summarizeBy: sum
+		sourceColumn: target_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_sales_target = m
+		mode: import
+		queryGroup: 03_Facts
+		source =
+				let
+				  Source = sales_targets,
+				  #"Renamed columns" = Table.RenameColumns(Source, {{"Period", "date"}, {"TargetRevenue", "target_revenue"}})
+				in
+				  #"Renamed columns"
+
+	annotation PBI_ResultType = Table
+
